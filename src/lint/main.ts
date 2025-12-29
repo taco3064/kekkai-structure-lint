@@ -7,9 +7,9 @@ export function defineConfig<F extends string>(
   {
     appAlias,
     dependencyFlowchart,
+    lintFiles,
     overrideRules,
     packageImportRules,
-    getLintFiles,
   }: Omit<DefineOptions<F>, 'docs'> = Utils.loadStructureConfig<F>(),
 ): ConfigWithExtendsArray {
   const folders = Utils.extractAllFolders(dependencyFlowchart);
@@ -26,7 +26,7 @@ export function defineConfig<F extends string>(
     );
 
     return {
-      files: getLintFiles(folder),
+      files: Utils.getLintFiles(folder, lintFiles),
       rules: {
         ...overrideRules?.[folder],
         'no-restricted-imports': [

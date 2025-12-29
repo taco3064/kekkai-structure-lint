@@ -1,0 +1,24 @@
+{
+  "appAlias": "~tests",
+  "dependencyFlowchart": [
+    ["pages", "layouts"],
+    ["layouts", "containers"],
+    ["containers", "contexts", { "label": "Only Provider" }],
+    ["containers", "components"],
+    ["components", "hooks"],
+    ["hooks", "contexts", { "label": "Only Context", "selfOnly": true }],
+    ["contexts", "services"],
+    ["components", "icons"],
+    ["icons", "styles"],
+    ["styles", "utils"],
+    ["services", "utils"]
+  ],
+  "docs": {
+    "file": "tests/TEST_DOCS.md",
+    "markerTag": "OVERRIDE_TEST",
+    "content": "This is a test documentation content."
+  },
+  "lintFiles": ["src/{folder}/**/*.(ts|tsx)"],
+  "overrideRules": {},
+  "packageImportRules": []
+}

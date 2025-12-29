@@ -25,7 +25,7 @@ export interface DefineOptions<F extends string> {
   appAlias: string;
   dependencyFlowchart: FlowchartConfig<F>[];
   docs?: DocsOptions;
+  lintFiles: string | string[];
   overrideRules?: Partial<Record<F, Partial<RulesConfig>>>;
   packageImportRules?: PackageImportRule<F>[];
-  getLintFiles: (folder: F) => string[];
 }

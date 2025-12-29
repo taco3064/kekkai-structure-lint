@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { JsonValue, JsonObject } from 'type-fest';
 
 import type { DefineOptions, FlowchartConfig } from './types';
+
+const LINT_FILES_REGEX = /\{\s*folder\s*\}/g;
 
 export function extractAllFolders<F extends string>(
   dependencyFlowchart: FlowchartConfig<F>[],
@@ -21,10 +24,8 @@ export function getDisableFolderImports<F extends string>(
   ) {
     return config.reduce<F[]>((acc, [from, to, options]) => {
       if (from === folder) {
-        if (!options?.selfOnly) {
+        if (!options?.selfOnly || root) {
           acc.push(to, ...getAllowedFolders(config, to, false));
-        } else if (root) {
-          acc.push(to);
         }
       }
 
@@ -35,8 +36,19 @@ export function getDisableFolderImports<F extends string>(
   return folders.filter((f) => !allowedFolders.includes(f) && f !== folder);
 }
 
-export function loadStructureConfig<F extends string>() {
-  const configPath = path.resolve(process.cwd(), 'structure.config.json');
+export function getLintFiles<F extends string>(
+  folder: F,
+  lintFiles: string | string[],
+): string[] {
+  const files = Array.isArray(lintFiles) ? lintFiles : [lintFiles];
+
+  return files.map((file) => file.replace(LINT_FILES_REGEX, folder));
+}
+
+export function loadStructureConfig<F extends string>(
+  defaultConfigPath = 'structure.config.json',
+) {
+  const configPath = path.resolve(process.cwd(), defaultConfigPath);
 
   if (!fs.existsSync(configPath)) {
     throw new Error(`structure.config.json not found at ${configPath}`);
@@ -45,15 +57,15 @@ export function loadStructureConfig<F extends string>() {
   return isConfigValid<F>(JSON.parse(fs.readFileSync(configPath, 'utf-8')));
 }
 
-function isConfigValid<F extends string>({
+export function isConfigValid<F extends string>({
   appAlias,
   dependencyFlowchart,
   docs,
+  lintFiles,
   overrideRules,
   packageImportRules,
-  getLintFiles,
-}: Partial<DefineOptions<F>>) {
-  if (!appAlias?.trim()) {
+}: Partial<Record<keyof DefineOptions<F>, JsonValue>>): DefineOptions<F> {
+  if (typeof appAlias !== 'string' || !appAlias?.trim()) {
     throw new Error('appAlias is required in structure.config.json');
   }
 
@@ -65,7 +77,12 @@ function isConfigValid<F extends string>({
         throw new Error(
           'Each item in dependencyFlowchart must be a tuple [string, string, options?] in structure.config.json',
         );
-      } else if (!item[0]?.trim() || !item[1]?.trim()) {
+      } else if (
+        typeof item[0] !== 'string' ||
+        typeof item[1] !== 'string' ||
+        !item[0]?.trim() ||
+        !item[1]?.trim()
+      ) {
         throw new Error(
           'Each tuple in dependencyFlowchart must have non-empty string values for the first two elements in structure.config.json',
         );
@@ -77,14 +94,22 @@ function isConfigValid<F extends string>({
     }
   }
 
-  const folders = extractAllFolders(dependencyFlowchart);
+  const folders = extractAllFolders(dependencyFlowchart as FlowchartConfig<F>[]);
 
-  if (docs && (!docs.file?.trim() || !docs.markerTag?.trim())) {
-    throw new Error(
-      'docs.file and docs.markerTag are required in structure.config.json if docs is provided',
-    );
-  } else if (docs?.content && typeof docs.content !== 'string') {
-    throw new Error('docs.content must be a string in structure.config.json');
+  if (docs) {
+    const { file, markerTag, content } = (docs || {}) as JsonObject;
+
+    if (typeof file !== 'string' || !file?.trim()) {
+      throw new Error(
+        'docs.file is required in structure.config.json if docs is provided',
+      );
+    } else if (typeof markerTag !== 'string' || !markerTag?.trim()) {
+      throw new Error(
+        'docs.markerTag is required in structure.config.json if docs is provided',
+      );
+    } else if (content && typeof content !== 'string') {
+      throw new Error('docs.content must be a string in structure.config.json');
+    }
   }
 
   if (overrideRules) {
@@ -105,26 +130,25 @@ function isConfigValid<F extends string>({
     }
 
     for (const rule of packageImportRules) {
-      if (!rule?.name?.trim()) {
+      const { name, importNames, allowedInFolders } = (rule || {}) as JsonObject;
+
+      if (typeof name !== 'string' || !name?.trim()) {
         throw new Error(
           'Each packageImportRule must have a non-empty name property in structure.config.json',
         );
       } else if (
-        Array.isArray(rule?.importNames) &&
-        rule.importNames.length &&
-        rule.importNames.some((name) => !name?.trim())
+        Array.isArray(importNames) &&
+        importNames.length &&
+        importNames.some((name) => typeof name !== 'string' || !name?.trim())
       ) {
         throw new Error(
           'importNames in packageImportRule must be an array of non-empty strings in structure.config.json',
         );
-      } else if (
-        !Array.isArray(rule?.allowedInFolders) ||
-        rule.allowedInFolders.length === 0
-      ) {
+      } else if (!Array.isArray(allowedInFolders) || allowedInFolders.length === 0) {
         throw new Error(
           'allowedInFolders in packageImportRule must be a non-empty array in structure.config.json',
         );
-      } else if (rule.allowedInFolders.some((folder) => !folders.includes(folder))) {
+      } else if (allowedInFolders.some((folder) => !folders.includes(folder as F))) {
         throw new Error(
           'allowedInFolders in packageImportRule contains invalid folder names not present in dependencyFlowchart in structure.config.json',
         );
@@ -132,16 +156,24 @@ function isConfigValid<F extends string>({
     }
   }
 
-  if (getLintFiles instanceof Function === false) {
-    throw new Error('getLintFiles must be a function in structure.config.json');
+  const files = (Array.isArray(lintFiles) ? lintFiles : [lintFiles]) as string[];
+
+  if (!files.length || files.some((file) => typeof file !== 'string' || !file?.trim())) {
+    throw new Error(
+      'lintFiles must be a non-empty string or an array of non-empty strings in structure.config.json',
+    );
+  } else if (files.some((file) => !LINT_FILES_REGEX.test(file))) {
+    throw new Error(
+      'Each lintFiles entry must include the "{folder}" placeholder in structure.config.json',
+    );
   }
 
   return {
     appAlias,
     dependencyFlowchart,
     docs,
+    lintFiles: files,
     overrideRules,
     packageImportRules,
-    getLintFiles,
   } as DefineOptions<F>;
 }
