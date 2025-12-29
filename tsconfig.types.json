@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.types.tsbuildinfo",
+
+    /* Must emit for declarations */
+    "composite": true,
+    "noEmit": false,
+
+    /* Declarations */
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./src/lint",
+    "declarationDir": "./dist",
+
+    /* Hygiene */
+    "stripInternal": true
+  },
+
+  /* Only generate types for the library (createConfig) */
+  "include": ["src/lint/**/*.ts"],
+  "exclude": [
+    "src/bin.ts",
+    "src/cli/**",
+    "tests/**",
+    "fixtures/**",
+    "dist/**",
+    "node_modules/**"
+  ]
+}
