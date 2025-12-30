@@ -45,7 +45,7 @@
     "commit": "cz",
     "lint": "eslint .",
     "prepare": "husky",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "tsc": "tsc -p tsconfig.lib.json"
   },
   "devDependencies": {

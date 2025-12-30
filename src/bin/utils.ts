@@ -2,11 +2,12 @@ import cacache from 'cacache';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 import type { DefineOptions, DocsOptions, FlowchartConfig } from '../lint/types';
 
-const CACHE_PATH = path.resolve(process.cwd(), 'node_modules/.cache/kekkai');
-const CACHE_KEY = 'dependency-flowchart-hash';
+export const CACHE_PATH = path.resolve(process.cwd(), 'node_modules/.cache/kekkai');
+export const CACHE_KEY = 'dependency-flowchart-hash';
 
 const DEFAULT_CONTENT = `
 This project follows a **One-way Dependency Flow** principle:
@@ -42,6 +43,13 @@ export async function generateDocs<F extends string>({
         docsFile.slice(docsFile.indexOf(marker.tag[1])),
       ].join('\n'),
     );
+
+    try {
+      execSync(`eslint --fix "${docs.file}"`, { stdio: 'inherit' });
+      execSync(`prettier --write "${docs.file}"`, { stdio: 'inherit' });
+    } catch {
+      console.warn('Prettier or ESLint formatting failed for the documentation file.');
+    }
 
     await makeCache(dependencyFlowchart);
   }

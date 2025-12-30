@@ -15,8 +15,7 @@
   ],
   "docs": {
     "file": "tests/docs.md",
-    "markerTag": "OVERRIDE_TEST",
-    "content": "This is a test documentation content."
+    "markerTag": "DEPENDENCY_RULE"
   },
   "lintFiles": ["src/{folder}/**/*.(ts|tsx)"],
   "overrideRules": {},
