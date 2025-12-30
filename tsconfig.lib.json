@@ -26,6 +26,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["rolldown.config.ts", "eslint.*.ts", "src", "tests"],
+  "include": ["rolldown.config.ts", "eslint.*.ts", "src"],
   "exclude": ["dist", "tests", "fixtures", "node_modules"]
 }

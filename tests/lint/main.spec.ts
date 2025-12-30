@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import * as Main from '../../src/lint/main';
-import STRUCTURE_CONFIG from '../../structure.config.json';
-import type { DefineOptions } from '../../src/lint/types';
+import * as Main from '~lib/lint/main';
+import STRUCTURE_CONFIG from '~structure.config.json';
+import type { DefineOptions } from '~lib/lint/types';
 
 describe('[Lint Main] defineConfig', () => {
   it('should define config correctly without parameters', () => {

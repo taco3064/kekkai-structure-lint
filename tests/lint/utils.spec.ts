@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { JsonObject, JsonValue } from 'type-fest';
 
-import * as Utils from '../../src/lint/utils';
-import STRUCTURE_CONFIG from '../../structure.config.json';
-import type { DefineOptions, FlowchartConfig } from '../../src/lint/types';
+import * as Utils from '~lib/lint/utils';
+import STRUCTURE_CONFIG from '~structure.config.json';
+import type { DefineOptions, FlowchartConfig } from '~lib/lint/types';
 
 const CONFIG = STRUCTURE_CONFIG as Partial<
   Record<keyof DefineOptions<string>, JsonValue>

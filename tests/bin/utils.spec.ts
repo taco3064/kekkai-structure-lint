@@ -2,9 +2,9 @@ import cacache from 'cacache';
 import fs from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 
-import * as Utils from '../../src/bin/utils';
-import STRUCTURE_CONFIG from '../../structure.config.json';
-import type { DefineOptions } from '../../src/lint/types';
+import * as Utils from '~lib/bin/utils';
+import STRUCTURE_CONFIG from '~structure.config.json';
+import type { DefineOptions } from '~lib/lint/types';
 
 describe('[Bin Utils] generateDocs', () => {
   const { dependencyFlowchart, docs } = STRUCTURE_CONFIG as Required<
@@ -82,7 +82,7 @@ describe('[Bin Utils] generateDocs', () => {
       }));
 
       // 3) 用動態 import 取得「吃到 mock 的」utils 新實例
-      const UtilsMocked = await import('../../src/bin/utils');
+      const UtilsMocked = await import('~lib/bin/utils');
 
       // 4) async 要用 resolves/rejects，不要用 not.toThrow()
       await expect(
