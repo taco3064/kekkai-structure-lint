@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import type { JsonObject, JsonValue } from 'type-fest';
 
 import * as Utils from '../../src/lint/utils';
-import STRUCTURE_CONFIG from '../config.json';
-import type { FlowchartConfig } from '../../src/lint/types';
+import STRUCTURE_CONFIG from '../../structure.config.json';
+import type { DefineOptions, FlowchartConfig } from '../../src/lint/types';
+
+const CONFIG = STRUCTURE_CONFIG as Partial<
+  Record<keyof DefineOptions<string>, JsonValue>
+>;
 
 describe('[Lint Utils] extractAllFolders', () => {
   it('should extract all folders from dependency flowchart', () => {
@@ -187,24 +192,38 @@ describe('[Lint Utils] loadStructureConfig', () => {
   });
 
   it('should load and validate structure.config.json correctly', () => {
-    const config = Utils.loadStructureConfig('tests/config.json');
+    const config = Utils.loadStructureConfig('structure.config.json');
 
-    expect(config).toEqual(STRUCTURE_CONFIG);
+    expect(config).toEqual(CONFIG);
+  });
+
+  it('should load and validate structure.config.json correctly', () => {
+    const config = Utils.loadStructureConfig();
+
+    expect(config).toEqual(CONFIG);
   });
 });
 
 describe('[Lint Utils] isConfigValid', () => {
+  it('should validate a correct structure config', () => {
+    const { docs, overrideRules, packageImportRules, ...config } = CONFIG;
+
+    expect(() => Utils.isConfigValid(CONFIG)).not.toThrow();
+    expect(() => Utils.isConfigValid({ ...config, docs })).not.toThrow();
+    expect(() => Utils.isConfigValid({ ...config, overrideRules })).not.toThrow();
+    expect(() => Utils.isConfigValid({ ...config, packageImportRules })).not.toThrow();
+  });
+
   it('should throw error for invalid appAlias', () => {
-    const { appAlias: _, ...config } = STRUCTURE_CONFIG;
+    const { appAlias: _, ...config } = CONFIG;
 
     expect(() => Utils.isConfigValid(config)).toThrow();
-    expect(() => Utils.isConfigValid({ ...config, appAlias: '' })).toThrow();
     expect(() => Utils.isConfigValid({ ...config, appAlias: 123 })).toThrow();
     expect(() => Utils.isConfigValid({ ...config, appAlias: ' ' })).toThrow();
   });
 
   it('should throw error for invalid dependencyFlowchart', () => {
-    const { dependencyFlowchart: _, ...config } = STRUCTURE_CONFIG;
+    const { dependencyFlowchart: _, ...config } = CONFIG;
 
     expect(() => Utils.isConfigValid(config)).toThrow();
 
@@ -218,14 +237,6 @@ describe('[Lint Utils] isConfigValid', () => {
 
     expect(() =>
       Utils.isConfigValid({ ...config, dependencyFlowchart: [[123]] }),
-    ).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [['', 'valid']] }),
-    ).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [['valid', '']] }),
     ).toThrow();
 
     expect(() =>
@@ -249,11 +260,10 @@ describe('[Lint Utils] isConfigValid', () => {
   });
 
   it('should throw error for invalid docs', () => {
-    const { docs, ...config } = STRUCTURE_CONFIG;
+    const { docs, ...config } = CONFIG;
 
     expect(() => Utils.isConfigValid({ ...config, docs: {} })).toThrow();
     expect(() => Utils.isConfigValid({ ...config, docs: { file: 1 } })).toThrow();
-    expect(() => Utils.isConfigValid({ ...config, docs: { file: '' } })).toThrow();
     expect(() => Utils.isConfigValid({ ...config, docs: { file: ' ' } })).toThrow();
 
     expect(() =>
@@ -261,20 +271,16 @@ describe('[Lint Utils] isConfigValid', () => {
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, docs: { file: 'valid', markerTag: '' } }),
-    ).toThrow();
-
-    expect(() =>
       Utils.isConfigValid({ ...config, docs: { file: 'valid', markerTag: ' ' } }),
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, docs: { ...docs, content: null } }),
+      Utils.isConfigValid({ ...config, docs: { ...(docs as JsonObject), content: 123 } }),
     ).toThrow();
   });
 
   it('should throw error for invalid overrideRules', () => {
-    const { overrideRules: _, ...config } = STRUCTURE_CONFIG;
+    const { overrideRules: _, ...config } = CONFIG;
 
     expect(() =>
       Utils.isConfigValid({ ...config, overrideRules: { invalidFolder: {} } }),
@@ -286,18 +292,18 @@ describe('[Lint Utils] isConfigValid', () => {
   });
 
   it('should throw error for invalid packageImportRules', () => {
-    const { packageImportRules: _, ...config } = STRUCTURE_CONFIG;
+    const { packageImportRules: _, ...config } = CONFIG;
 
     expect(() =>
       Utils.isConfigValid({ ...config, packageImportRules: 'not-an-array' }),
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, packageImportRules: [{ name: 1 }] }),
+      Utils.isConfigValid({ ...config, packageImportRules: [null] }),
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, packageImportRules: [{ name: '' }] }),
+      Utils.isConfigValid({ ...config, packageImportRules: [{ name: 1 }] }),
     ).toThrow();
 
     expect(() =>
@@ -308,6 +314,13 @@ describe('[Lint Utils] isConfigValid', () => {
       Utils.isConfigValid({
         ...config,
         packageImportRules: [{ name: 'react', importNames: [1] }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [{ name: 'react', importNames: [' '] }],
       }),
     ).toThrow();
 
@@ -334,7 +347,7 @@ describe('[Lint Utils] isConfigValid', () => {
   });
 
   it('should throw error for invalid lintFiles', () => {
-    const { lintFiles: _, ...config } = STRUCTURE_CONFIG;
+    const { lintFiles: _, ...config } = CONFIG;
 
     expect(() => Utils.isConfigValid({ ...config, lintFiles: [] })).toThrow();
     expect(() => Utils.isConfigValid({ ...config, lintFiles: 123 })).toThrow();

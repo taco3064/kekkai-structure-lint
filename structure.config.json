@@ -14,11 +14,26 @@
     ["services", "utils"]
   ],
   "docs": {
-    "file": "tests/TEST_DOCS.md",
+    "file": "tests/docs.md",
     "markerTag": "OVERRIDE_TEST",
     "content": "This is a test documentation content."
   },
   "lintFiles": ["src/{folder}/**/*.(ts|tsx)"],
   "overrideRules": {},
-  "packageImportRules": []
+  "packageImportRules": [
+    {
+      "name": "react",
+      "importNames": ["createContext"],
+      "allowedInFolders": ["contexts"]
+    },
+    {
+      "name": "react",
+      "importNames": ["useContext"],
+      "allowedInFolders": ["hooks"]
+    },
+    {
+      "name": "axios",
+      "allowedInFolders": ["services"]
+    }
+  ]
 }

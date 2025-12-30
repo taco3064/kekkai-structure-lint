@@ -4,7 +4,7 @@ import type { JsonValue, JsonObject } from 'type-fest';
 
 import type { DefineOptions, FlowchartConfig } from './types';
 
-const LINT_FILES_REGEX = /\{\s*folder\s*\}/g;
+const LINT_FILES_REGEX = /\{\s*folder\s*\}/;
 
 export function extractAllFolders<F extends string>(
   dependencyFlowchart: FlowchartConfig<F>[],
@@ -97,7 +97,7 @@ export function isConfigValid<F extends string>({
   const folders = extractAllFolders(dependencyFlowchart as FlowchartConfig<F>[]);
 
   if (docs) {
-    const { file, markerTag, content } = (docs || {}) as JsonObject;
+    const { file, markerTag, content } = docs as JsonObject;
 
     if (typeof file !== 'string' || !file?.trim()) {
       throw new Error(
@@ -158,14 +158,20 @@ export function isConfigValid<F extends string>({
 
   const files = (Array.isArray(lintFiles) ? lintFiles : [lintFiles]) as string[];
 
-  if (!files.length || files.some((file) => typeof file !== 'string' || !file?.trim())) {
-    throw new Error(
-      'lintFiles must be a non-empty string or an array of non-empty strings in structure.config.json',
-    );
-  } else if (files.some((file) => !LINT_FILES_REGEX.test(file))) {
-    throw new Error(
-      'Each lintFiles entry must include the "{folder}" placeholder in structure.config.json',
-    );
+  if (!files.length) {
+    throw new Error('lintFiles is required in structure.config.json');
+  } else {
+    for (const file of files) {
+      if (typeof file !== 'string' || !file?.trim()) {
+        throw new Error(
+          'lintFiles must be a non-empty string or an array of non-empty strings in structure.config.json',
+        );
+      } else if (!LINT_FILES_REGEX.test(file)) {
+        throw new Error(
+          'Each lintFiles entry must include the "{folder}" placeholder in structure.config.json',
+        );
+      }
+    }
   }
 
   return {
