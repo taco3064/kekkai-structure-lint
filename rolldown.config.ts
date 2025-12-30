@@ -17,6 +17,13 @@ export default defineConfig([
       format: 'esm',
       entryFileNames: 'bin.js',
     },
-    external: ['node:crypto', 'node:fs', 'node:path', 'cacache', 'ora'],
+    external: [
+      'node:child_process',
+      'node:crypto',
+      'node:fs',
+      'node:path',
+      'cacache',
+      'ora',
+    ],
   },
 ]);

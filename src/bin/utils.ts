@@ -45,10 +45,9 @@ export async function generateDocs<F extends string>({
     );
 
     try {
-      execSync(`eslint --fix "${docs.file}"`, { stdio: 'inherit' });
-      execSync(`prettier --write "${docs.file}"`, { stdio: 'inherit' });
+      execSync(`npm exec -- prettier --write "${docs.file}"`, { stdio: 'inherit' });
     } catch {
-      console.warn('Prettier or ESLint formatting failed for the documentation file.');
+      console.warn('Prettier formatting failed for the documentation file.');
     }
 
     await makeCache(dependencyFlowchart);

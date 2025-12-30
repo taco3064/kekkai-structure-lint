@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import ora from 'ora';
 
 import { generateDocs } from './utils';
