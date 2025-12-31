@@ -1,6 +1,6 @@
 {
   "name": "@kekkai/structure-lint",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "description": "Config-driven ESLint structure rule generator enforcing one-way folder dependency flow, with a separate CLI for docs sync/verification.",
   "type": "module",
@@ -45,10 +45,10 @@
     "changeset": "changeset",
     "commit": "cz",
     "lint": "eslint .",
+    "pre-release": "node ./.changeset/pre-release.mjs",
     "prepare": "husky",
     "test": "vitest run --coverage",
-    "tsc": "tsc -p tsconfig.lib.json",
-    "version": "changeset version"
+    "tsc": "tsc -p tsconfig.lib.json"
   },
   "dependencies": {
     "cacache": "^20.0.3",
