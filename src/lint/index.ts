@@ -1,2 +1,2 @@
 export * from './main';
-export type { DefineOptions, FlowchartConfig } from './types';
+export type { DefineOptions, DependencyFlow } from './types';

@@ -3,7 +3,7 @@ import type { JsonObject, JsonValue } from 'type-fest';
 
 import * as Utils from '~lib/lint/utils';
 import STRUCTURE_CONFIG from '~structure.config.json';
-import type { DefineOptions, FlowchartConfig } from '~lib/lint/types';
+import type { DefineOptions, DependencyFlow } from '~lib/lint/types';
 
 const CONFIG = STRUCTURE_CONFIG as Partial<
   Record<keyof DefineOptions<string>, JsonValue>
@@ -139,14 +139,14 @@ describe('[Lint Utils] getDisableFolderImports', () => {
     ]);
   });
 
-  const FLOWCHART: FlowchartConfig<string>[] = [
+  const FLOWCHART: DependencyFlow<string>[] = [
     ['pages', 'layouts'],
     ['layouts', 'containers'],
     [
       'containers',
       'contexts',
       {
-        label: 'Only Provider',
+        description: 'Only Provider',
       },
     ],
     ['containers', 'components'],
@@ -155,7 +155,7 @@ describe('[Lint Utils] getDisableFolderImports', () => {
       'hooks',
       'contexts',
       {
-        label: 'Only Context',
+        description: 'Only Context',
         selfOnly: true,
       },
     ],
@@ -222,39 +222,35 @@ describe('[Lint Utils] isConfigValid', () => {
     expect(() => Utils.isConfigValid({ ...config, appAlias: ' ' })).toThrow();
   });
 
-  it('should throw error for invalid dependencyFlowchart', () => {
-    const { dependencyFlowchart: _, ...config } = CONFIG;
+  it('should throw error for invalid dependencyFlow', () => {
+    const { dependencyFlow: _, ...config } = CONFIG;
 
     expect(() => Utils.isConfigValid(config)).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: 'not-an-array' }),
+      Utils.isConfigValid({ ...config, dependencyFlow: 'not-an-array' }),
+    ).toThrow();
+
+    expect(() => Utils.isConfigValid({ ...config, dependencyFlow: [123] })).toThrow();
+
+    expect(() => Utils.isConfigValid({ ...config, dependencyFlow: [[123]] })).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...config, dependencyFlow: [['valid', 123]] }),
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [123] }),
+      Utils.isConfigValid({ ...config, dependencyFlow: [[' ', 'valid']] }),
     ).toThrow();
 
     expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [[123]] }),
-    ).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [['valid', 123]] }),
-    ).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [[' ', 'valid']] }),
-    ).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, dependencyFlowchart: [['valid', ' ']] }),
+      Utils.isConfigValid({ ...config, dependencyFlow: [['valid', ' ']] }),
     ).toThrow();
 
     expect(() =>
       Utils.isConfigValid({
         ...config,
-        dependencyFlowchart: [['valid', 'valid', 'not-an-object']],
+        dependencyFlow: [['valid', 'valid', 'not-an-object']],
       }),
     ).toThrow();
   });

@@ -6,17 +6,17 @@ import type { DefineOptions } from './types';
 export function defineConfig<F extends string>(
   {
     appAlias,
-    dependencyFlowchart,
+    dependencyFlow,
     lintFiles,
     overrideRules,
     packageImportRules,
   }: Omit<DefineOptions<F>, 'docs'> = Utils.loadStructureConfig<F>(),
 ): ConfigWithExtendsArray {
-  const folders = Utils.extractAllFolders(dependencyFlowchart);
+  const folders = Utils.extractAllFolders(dependencyFlow);
 
   return folders.map((folder) => {
     const disableFolderImports = Utils.getDisableFolderImports(
-      dependencyFlowchart,
+      dependencyFlow,
       folders,
       folder,
     );

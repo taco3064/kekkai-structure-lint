@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
 
-import type { DefineOptions, DocsOptions, FlowchartConfig } from '../lint/types';
+import type { DefineOptions, DocsOptions, DependencyFlow } from '../lint/types';
 
 export const CACHE_PATH = path.resolve(process.cwd(), 'node_modules/.cache/kekkai');
 export const CACHE_KEY = 'dependency-flowchart-hash';
@@ -19,9 +19,9 @@ This project follows a **One-way Dependency Flow** principle:
 `;
 
 export async function generateDocs<F extends string>({
-  dependencyFlowchart,
+  dependencyFlow,
   docs,
-}: Required<Pick<DefineOptions<F>, 'dependencyFlowchart' | 'docs'>>) {
+}: Required<Pick<DefineOptions<F>, 'dependencyFlow' | 'docs'>>) {
   const marker = getMarker(docs.markerTag);
 
   if (isDocsValid(docs, marker.regex)) {
@@ -34,9 +34,9 @@ export async function generateDocs<F extends string>({
         docsFile.slice(0, docsFile.indexOf(marker.tag[0]) + marker.tag[0].length),
         '```mermaid',
         'flowchart TD',
-        ...dependencyFlowchart.map(
+        ...dependencyFlow.map(
           ([from, to, options]) =>
-            `  ${from} ${!options?.label ? '' : `-- ${options.label} `}--> ${to}`,
+            `  ${from} ${!options?.description ? '' : `-- ${options.description} `}--> ${to}`,
         ),
         '```',
         content,
@@ -50,11 +50,11 @@ export async function generateDocs<F extends string>({
       console.warn('Prettier formatting failed for the documentation file.');
     }
 
-    await makeCache(dependencyFlowchart);
+    await makeCache(dependencyFlow);
   }
 }
 
-async function makeCache<F extends string>(flowchart: FlowchartConfig<F>[]) {
+async function makeCache<F extends string>(flowchart: DependencyFlow<F>[]) {
   const hash = createHash('sha256')
     .update(
       JSON.stringify(

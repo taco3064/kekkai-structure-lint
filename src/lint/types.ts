@@ -12,18 +12,18 @@ export interface DocsOptions {
   content?: string;
 }
 
-export type FlowchartConfig<F extends string> = [
+export type DependencyFlow<F extends string> = [
   F,
   F,
   {
-    label?: string;
+    description?: string;
     selfOnly?: boolean;
   }?,
 ];
 
 export interface DefineOptions<F extends string> {
   appAlias: string;
-  dependencyFlowchart: FlowchartConfig<F>[];
+  dependencyFlow: DependencyFlow<F>[];
   docs?: DocsOptions;
   lintFiles: string | string[];
   overrideRules?: Partial<Record<F, Partial<RulesConfig>>>;

@@ -17,9 +17,9 @@ try {
 }
 
 if (config && config.docs) {
-  const { dependencyFlowchart, docs } = config;
+  const { dependencyFlow, docs } = config;
 
-  generateDocs({ dependencyFlowchart, docs })
+  generateDocs({ dependencyFlow, docs })
     .then(() => spinner.succeed('Docs generated successfully.'))
     .catch((e) => spinner.fail(`Failed to generate docs: ${(e as Error).message}`));
 }

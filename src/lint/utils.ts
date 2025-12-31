@@ -2,23 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { JsonValue, JsonObject } from 'type-fest';
 
-import type { DefineOptions, FlowchartConfig } from './types';
+import type { DefineOptions, DependencyFlow } from './types';
 
 const LINT_FILES_REGEX = /\{\s*folder\s*\}/;
 
 export function extractAllFolders<F extends string>(
-  dependencyFlowchart: FlowchartConfig<F>[],
+  dependencyFlow: DependencyFlow<F>[],
 ): F[] {
-  return Array.from(new Set<F>(dependencyFlowchart.flatMap(([from, to]) => [from, to])));
+  return Array.from(new Set<F>(dependencyFlow.flatMap(([from, to]) => [from, to])));
 }
 
 export function getDisableFolderImports<F extends string>(
-  config: FlowchartConfig<F>[],
+  config: DependencyFlow<F>[],
   folders: Readonly<F[]>,
   folder: F,
 ): F[] {
   const allowedFolders = (function getAllowedFolders(
-    config: FlowchartConfig<F>[],
+    config: DependencyFlow<F>[],
     folder: F,
     root: boolean,
   ) {
@@ -59,7 +59,7 @@ export function loadStructureConfig<F extends string>(
 
 export function isConfigValid<F extends string>({
   appAlias,
-  dependencyFlowchart,
+  dependencyFlow,
   docs,
   lintFiles,
   overrideRules,
@@ -69,13 +69,13 @@ export function isConfigValid<F extends string>({
     throw new Error('appAlias is required in structure.config.json');
   }
 
-  if (!Array.isArray(dependencyFlowchart)) {
-    throw new Error('dependencyFlowchart must be an array in structure.config.json');
+  if (!Array.isArray(dependencyFlow)) {
+    throw new Error('dependencyFlow must be an array in structure.config.json');
   } else {
-    for (const item of dependencyFlowchart) {
+    for (const item of dependencyFlow) {
       if (!Array.isArray(item)) {
         throw new Error(
-          'Each item in dependencyFlowchart must be a tuple [string, string, options?] in structure.config.json',
+          'Each item in dependencyFlow must be a tuple [string, string, options?] in structure.config.json',
         );
       } else if (
         typeof item[0] !== 'string' ||
@@ -84,17 +84,17 @@ export function isConfigValid<F extends string>({
         !item[1]?.trim()
       ) {
         throw new Error(
-          'Each tuple in dependencyFlowchart must have non-empty string values for the first two elements in structure.config.json',
+          'Each tuple in dependencyFlow must have non-empty string values for the first two elements in structure.config.json',
         );
       } else if (item.length > 2 && typeof item[2] !== 'object') {
         throw new Error(
-          'The third element in the dependencyFlowchart tuple must be an object if provided in structure.config.json',
+          'The third element in the dependencyFlow tuple must be an object if provided in structure.config.json',
         );
       }
     }
   }
 
-  const folders = extractAllFolders(dependencyFlowchart as FlowchartConfig<F>[]);
+  const folders = extractAllFolders(dependencyFlow as DependencyFlow<F>[]);
 
   if (docs) {
     const { file, markerTag, content } = docs as JsonObject;
@@ -117,7 +117,7 @@ export function isConfigValid<F extends string>({
 
     if (entries.some(([key]) => !folders.includes(key as F))) {
       throw new Error(
-        'overrideRules contains invalid folder keys not present in dependencyFlowchart in structure.config.json',
+        'overrideRules contains invalid folder keys not present in dependencyFlow in structure.config.json',
       );
     } else if (entries.some(([_, rules]) => rules && typeof rules !== 'object')) {
       throw new Error('overrideRules values must be objects in structure.config.json');
@@ -150,7 +150,7 @@ export function isConfigValid<F extends string>({
         );
       } else if (allowedInFolders.some((folder) => !folders.includes(folder as F))) {
         throw new Error(
-          'allowedInFolders in packageImportRule contains invalid folder names not present in dependencyFlowchart in structure.config.json',
+          'allowedInFolders in packageImportRule contains invalid folder names not present in dependencyFlow in structure.config.json',
         );
       }
     }
@@ -176,7 +176,7 @@ export function isConfigValid<F extends string>({
 
   return {
     appAlias,
-    dependencyFlowchart,
+    dependencyFlow,
     docs,
     lintFiles: files,
     overrideRules,

@@ -1,12 +1,12 @@
 {
   "appAlias": "~tests",
-  "dependencyFlowchart": [
+  "dependencyFlow": [
     ["pages", "layouts"],
     ["layouts", "containers"],
-    ["containers", "contexts", { "label": "Only Provider" }],
+    ["containers", "contexts", { "description": "Only Provider" }],
     ["containers", "components"],
     ["components", "hooks"],
-    ["hooks", "contexts", { "label": "Only Context", "selfOnly": true }],
+    ["hooks", "contexts", { "description": "Only Context", "selfOnly": true }],
     ["contexts", "services"],
     ["components", "icons"],
     ["icons", "styles"],

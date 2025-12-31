@@ -9,16 +9,14 @@ import type { DefineOptions } from '~lib/lint/types';
 const TIMEOUT = 60 * 1000;
 
 describe('[Bin Utils] generateDocs', () => {
-  const { dependencyFlowchart, docs } = STRUCTURE_CONFIG as Required<
-    DefineOptions<string>
-  >;
+  const { dependencyFlow, docs } = STRUCTURE_CONFIG as Required<DefineOptions<string>>;
 
   const defaultDocs = fs.readFileSync(docs.file, 'utf-8');
 
   it(
     'should generate docs correctly',
     async () => {
-      await Utils.generateDocs({ dependencyFlowchart, docs });
+      await Utils.generateDocs({ dependencyFlow, docs });
       const cache = await cacache.get(Utils.CACHE_PATH, Utils.CACHE_KEY);
       const updatedDocs = fs.readFileSync(docs.file, 'utf-8');
 
@@ -32,7 +30,7 @@ describe('[Bin Utils] generateDocs', () => {
     'should generate docs with the specified marker & content',
     async () => {
       await Utils.generateDocs({
-        dependencyFlowchart,
+        dependencyFlow,
         docs: { ...docs, markerTag: 'CUSTOM_MARKER', content: 'Custom Content' },
       });
 
@@ -48,7 +46,7 @@ describe('[Bin Utils] generateDocs', () => {
     'should create cache when it does not exist',
     async () => {
       await cacache.rm(Utils.CACHE_PATH, Utils.CACHE_KEY);
-      await Utils.generateDocs({ dependencyFlowchart, docs });
+      await Utils.generateDocs({ dependencyFlow, docs });
 
       const cache = await cacache.get(Utils.CACHE_PATH, Utils.CACHE_KEY);
 
@@ -62,7 +60,7 @@ describe('[Bin Utils] generateDocs', () => {
     async () => {
       await expect(
         Utils.generateDocs({
-          dependencyFlowchart,
+          dependencyFlow,
           docs: { ...docs, file: 'non-existent-file.md' },
         }),
       ).rejects.toThrow();
@@ -75,7 +73,7 @@ describe('[Bin Utils] generateDocs', () => {
     async () => {
       await expect(
         Utils.generateDocs({
-          dependencyFlowchart,
+          dependencyFlow,
           docs: { ...docs, markerTag: 'MISSING_MARKER' },
         }),
       ).rejects.toThrow();
@@ -88,7 +86,7 @@ describe('[Bin Utils] generateDocs', () => {
     async () => {
       await expect(
         Utils.generateDocs({
-          dependencyFlowchart,
+          dependencyFlow,
           docs: { ...docs, markerTag: 'MISSINF_END_MARKER' },
         }),
       ).rejects.toThrow();
@@ -114,7 +112,7 @@ describe('[Bin Utils] generateDocs', () => {
 
         // 4) async 要用 resolves/rejects，不要用 not.toThrow()
         await expect(
-          UtilsMocked.generateDocs({ dependencyFlowchart, docs }),
+          UtilsMocked.generateDocs({ dependencyFlow, docs }),
         ).resolves.toBeUndefined();
       } finally {
         // 6) 收尾，避免 mock 狀態殘留（雖然你放最後也建議做）
