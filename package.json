@@ -1,6 +1,6 @@
 {
   "name": "@kekkai/structure-lint",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "license": "MIT",
   "description": "Config-driven ESLint structure rule generator enforcing one-way folder dependency flow, with a separate CLI for docs sync/verification.",
   "type": "module",
