@@ -19,16 +19,14 @@ try {
 
   // 3. commit
   spinner.text = `Committing release ${version}...`;
-  run('git add -A');
+  run('git add package.json CHANGELOG.md .changeset');
   run(`git commit -m "RELEASE: ${version}"`);
+  run('git push');
 
   // 4. tag
   spinner.text = `Tagging ${version}...`;
   run(`git tag ${version}`);
-
-  // 5. push
-  spinner.text = 'Pushing commit and tag...';
-  run('git push --follow-tags');
+  run('git push --tags');
 
   spinner.succeed(`Release ${version} completed`);
 } catch (e) {
