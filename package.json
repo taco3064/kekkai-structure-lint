@@ -7,15 +7,6 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "author": "tabacotaco",
-  "homepage": "https://github.com/taco3064/kekkai-structure-lint#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/taco3064/kekkai-structure-lint.git"
-  },
-  "bugs": {
-    "url": "https://github.com/taco3064/kekkai-structure-lint/issues"
-  },
   "bin": {
     "structure-lint": "./dist/bin.js"
   },
@@ -40,6 +31,15 @@
     "code-quality",
     "maintainability"
   ],
+  "author": "tabacotaco",
+  "homepage": "https://github.com/taco3064/kekkai-structure-lint#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taco3064/kekkai-structure-lint.git"
+  },
+  "bugs": {
+    "url": "https://github.com/taco3064/kekkai-structure-lint/issues"
+  },
   "scripts": {
     "build": "rm -rf dist && rolldown -c rolldown.config.ts && tsc -b tsconfig.types.json --force",
     "commit": "cz",

@@ -3,7 +3,7 @@ import type { ConfigWithExtendsArray } from '@eslint/config-helpers';
 import * as Utils from './utils';
 import type { DefineOptions } from './types';
 
-export function defineConfig<F extends string>(
+export function createStructureLint<F extends string>(
   {
     appAlias,
     dependencyFlow,
