@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 import type { DefineOptions, DocsOptions, DependencyFlow } from '../lint/types';
 
@@ -18,10 +19,15 @@ This project follows a **One-way Dependency Flow** principle:
 > This rule is also enforced via **ESLint**.
 `;
 
+export function isCliEntry(argv1?: string) {
+  return argv1 && import.meta.url === pathToFileURL(argv1).href;
+}
+
 export async function generateDocs<F extends string>({
   dependencyFlow,
   docs,
-}: Required<Pick<DefineOptions<F>, 'dependencyFlow' | 'docs'>>) {
+  prettier,
+}: Required<Pick<DefineOptions<F>, 'dependencyFlow' | 'docs'> & { prettier: string }>) {
   const marker = getMarker(docs.markerTag);
 
   if (isDocsValid(docs, marker.regex)) {
@@ -44,10 +50,12 @@ export async function generateDocs<F extends string>({
       ].join('\n'),
     );
 
-    try {
-      execSync(`npm exec -- prettier --write "${docs.file}"`, { stdio: 'inherit' });
-    } catch {
-      console.warn('Prettier formatting failed for the documentation file.');
+    if (fs.existsSync(prettier)) {
+      try {
+        execSync(`"${prettier}" --write "${docs.file}"`, { stdio: 'inherit' });
+      } catch {
+        console.warn('Prettier formatting failed for the documentation file.');
+      }
     }
 
     await makeCache(dependencyFlow);

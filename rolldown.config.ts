@@ -22,6 +22,7 @@ export default defineConfig([
       'node:crypto',
       'node:fs',
       'node:path',
+      'node:url',
       'cacache',
       'ora',
     ],

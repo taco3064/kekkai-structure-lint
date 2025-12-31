@@ -1,53 +1,66 @@
 import { describe, it, expect, vi } from 'vitest';
 
-const TIMEOUT = 60 * 1000;
+import { run } from '~lib/bin/main';
 
 describe('main.ts executes on import', () => {
-  it(
-    'should execute correctly',
-    async () => {
+  it('should CLI work correctly', async () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(((code?: number) => code) as never);
+
+    try {
+      vi.resetModules();
+      vi.doMock('~lib/bin/utils', () => ({ isCliEntry: vi.fn(() => true) }));
+
       await expect(import('~lib/bin/main')).resolves.toBeDefined();
-    },
-    TIMEOUT,
-  );
+    } finally {
+      vi.doUnmock('~lib/lint/utils');
+      vi.resetModules();
+      exitSpy.mockRestore();
+    }
+  });
 
-  it(
-    'should stop execution when the structure config is missing',
-    async () => {
-      try {
-        vi.resetModules();
+  it('should run function work correctly', async () => {
+    expect(await run()).toBe(0);
+  });
 
-        vi.doMock('~lib/lint/utils', () => ({
-          loadStructureConfig: vi.fn(() => {
-            throw new Error('structure.config.json not found');
-          }),
-        }));
+  it('should stop execution when no docs config', async () => {
+    try {
+      vi.resetModules();
+      vi.doMock('~lib/bin/utils', () => ({ isCliEntry: vi.fn(() => false) }));
 
-        await expect(import('~lib/bin/main')).resolves.toBeDefined();
-      } finally {
-        vi.doUnmock('~lib/lint/utils');
-        vi.resetModules();
-      }
-    },
-    TIMEOUT,
-  );
+      vi.doMock('~lib/lint/utils', () => ({
+        loadStructureConfig: vi.fn(() => ({})),
+      }));
 
-  it(
-    'should stop execution when generateDocs fails',
-    async () => {
-      try {
-        vi.resetModules();
+      const MainMocked = await import('~lib/bin/main');
 
-        vi.doMock('~lib/bin/utils', () => ({
-          generateDocs: vi.fn(() => Promise.reject(new Error('Failed to generate docs'))),
-        }));
+      expect(await MainMocked.run()).toBe(0);
+    } finally {
+      vi.doUnmock('~lib/bin/utils');
+      vi.doUnmock('~lib/lint/utils');
+      vi.resetModules();
+    }
+  });
 
-        await expect(import('~lib/bin/main')).resolves.toBeDefined();
-      } finally {
-        vi.doUnmock('~lib/bin/utils');
-        vi.resetModules();
-      }
-    },
-    TIMEOUT,
-  );
+  it('should stop execution when the structure config is missing', async () => {
+    try {
+      vi.resetModules();
+      vi.doMock('~lib/bin/utils', () => ({ isCliEntry: vi.fn(() => false) }));
+
+      vi.doMock('~lib/lint/utils', () => ({
+        loadStructureConfig: vi.fn(() => {
+          throw new Error('structure.config.json not found');
+        }),
+      }));
+
+      const MainMocked = await import('~lib/bin/main');
+
+      expect(await MainMocked.run()).toBe(1);
+    } finally {
+      vi.doUnmock('~lib/bin/utils');
+      vi.doUnmock('~lib/lint/utils');
+      vi.resetModules();
+    }
+  });
 });
