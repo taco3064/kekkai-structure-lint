@@ -1,0 +1,110 @@
+name: Release (tag)
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 需要上一個 commit 來檢查 CHANGELOG 是否有更新
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run tsc
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # -------------------------
+      # 🚧 Release Safety Gates
+      # -------------------------
+
+      - name: Ensure tag version matches package.json version
+        shell: bash
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+
+          # 從 tag 中抓出第一個符合 semver 的片段（x.y.z）
+          # 可支援：
+          # - 0.1.0
+          # - @kekkai/structure-lint@0.1.0
+          # - release-0.1.0
+          TAG_VERSION="$(echo "$TAG_NAME" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)"
+
+          if [ -z "$TAG_VERSION" ]; then
+            echo "❌ Cannot parse semver (x.y.z) from tag: $TAG_NAME"
+            exit 1
+          fi
+
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+          echo "✅ Tag version matches package.json: $TAG_VERSION"
+
+      - name: Ensure CHANGELOG.md was updated in the release commit
+        shell: bash
+        run: |
+          # 檢查 tag 指到的 commit 與它的上一個 commit 之間，有沒有修改 CHANGELOG.md
+          if ! git diff --name-only HEAD^ HEAD | grep -q '^CHANGELOG\.md$'; then
+            echo "❌ CHANGELOG.md was not updated in this release commit."
+            echo "Fix: run 'npx changeset version' then commit, then create/push the tag again."
+            exit 1
+          fi
+
+          echo "✅ CHANGELOG.md updated"
+
+      - name: Ensure all changesets are consumed
+        shell: bash
+        run: |
+          # changeset version 正常情況會消耗（刪除）.changeset/*.md
+          # 若還殘留，代表有人沒跑 version 或漏處理
+          if [ -d ".changeset" ]; then
+            # 排除 config.json / README.md 等非變更檔
+            PENDING="$(find .changeset -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')"
+            if [ "$PENDING" != "0" ]; then
+              echo "❌ Unreleased changesets detected: $PENDING file(s) in .changeset/"
+              echo "Fix: run 'npx changeset version' then commit, then create/push the tag again."
+              exit 1
+            fi
+          fi
+
+          echo "✅ No pending changesets"
+
+      # -------------------------
+      # 🚀 Publish
+      # -------------------------
+
+      - name: Publish to npm
+        run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
