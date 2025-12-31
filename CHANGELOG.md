@@ -1,5 +1,11 @@
 # @kekkai/structure-lint
 
+## 0.0.3
+
+### Patch Changes
+
+- github action debug
+
 ## 0.0.2
 
 ### Patch Changes
