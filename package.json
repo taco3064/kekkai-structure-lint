@@ -48,6 +48,10 @@
     "test": "vitest run --coverage",
     "tsc": "tsc -p tsconfig.lib.json"
   },
+  "dependencies": {
+    "cacache": "^20.0.3",
+    "ora": "^9.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/cacache": "^20.0.0",
@@ -75,9 +79,5 @@
     "*.{js,ts}": [
       "eslint --fix"
     ]
-  },
-  "dependencies": {
-    "cacache": "^20.0.3",
-    "ora": "^9.0.0"
   }
 }

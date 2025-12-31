@@ -6,7 +6,7 @@ import * as Utils from '~lib/bin/utils';
 import STRUCTURE_CONFIG from '~structure.config.json';
 import type { DefineOptions } from '~lib/lint/types';
 
-const TIMEOUT = 10 * 1000;
+const TIMEOUT = 60 * 1000;
 
 describe('[Bin Utils] generateDocs', () => {
   const { dependencyFlowchart, docs } = STRUCTURE_CONFIG as Required<

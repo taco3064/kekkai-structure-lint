@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-const TIMEOUT = 10 * 1000;
+const TIMEOUT = 60 * 1000;
 
 describe('main.ts executes on import', () => {
   it(

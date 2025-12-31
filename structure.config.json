@@ -18,7 +18,9 @@
     "markerTag": "DEPENDENCY_RULE"
   },
   "lintFiles": ["src/{folder}/**/*.(ts|tsx)"],
-  "overrideRules": {},
+  "overrideRules": {
+    "contexts": { "react-refresh/only-export-components": "off" }
+  },
   "packageImportRules": [
     {
       "name": "react",
