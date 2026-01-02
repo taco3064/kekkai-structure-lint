@@ -14,7 +14,8 @@ export default defineConfig({
     include: ['tests/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text'],
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
       thresholds: {
         lines: 100,
         functions: 100,

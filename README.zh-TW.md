@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/taco3064/kekkai-structure-lint/branch/main/graph/badge.svg)](https://codecov.io/gh/taco3064/kekkai-structure-lint)
+
 [English](https://github.com/taco3064/kekkai-structure-lint/blob/main/README.md) | **繁體中文**
 
 # 📦 @kekkai/structure-lint

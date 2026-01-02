@@ -1,6 +1,8 @@
+[![codecov](https://codecov.io/gh/taco3064/kekkai-structure-lint/branch/main/graph/badge.svg)](https://codecov.io/gh/taco3064/kekkai-structure-lint)
+
 **English** | [繁體中文](https://github.com/taco3064/kekkai-structure-lint/blob/main/README.zh-TW.md)
 
-# 📦 @kekkai/structure-lint
+# @kekkai/structure-lint
 
 A **config-driven** ESLint structure rule generator that enforces **one-way folder dependency flow** in your project, with a separate CLI for syncing and validating dependency rules in documentation.
 
