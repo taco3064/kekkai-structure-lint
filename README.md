@@ -247,7 +247,7 @@ Based on the `markerTag` configuration, the CLI will locate and overwrite the fo
 ## 🔁 Circular Dependencies (Optional)
 
 `@kekkai/structure-lint` enforces one-way dependency flow **across layers**,
-but intentionally allows **same-layer imports as a design trade-off**..
+but intentionally allows **same-layer imports as a design trade-off**.
 
 As a result, circular dependencies may still occur within the same layer.
 This is usually acceptable for small modules, but may become risky as the codebase grows.
