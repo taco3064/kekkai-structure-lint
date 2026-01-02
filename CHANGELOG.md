@@ -1,5 +1,11 @@
 # @kekkai/structure-lint
 
+## 1.1.1
+
+### Patch Changes
+
+- 5107603: Add Codecov integration to publish test coverage and display a coverage badge in README.
+
 ## 1.1.0
 
 ### Minor Changes
