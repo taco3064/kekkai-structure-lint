@@ -142,6 +142,26 @@ This file is read by both:
   "lintFiles": "src/{folder}/**/*.{ts,tsx}",
 
   /**
+   * moduleLayout
+   *   type (optional)
+   *   - 'folder' | 'flat'
+   *
+   * Controls how modules are structured within each layer and how
+   * relative import restrictions are generated.
+   *
+   * - 'folder' (default):
+   *   Each module lives in its own subfolder (e.g. components/Card/*),
+   *   and imports are only allowed via the module entry.
+   *
+   * - 'flat':
+   *   Modules are represented directly by files under the layer
+   *   (e.g. components/Card.tsx).
+   *
+   * Default: 'folder'
+   */
+  "moduleLayout": "folder",
+
+  /**
    * dependencyFlow
    *   type (required):
    *   - [

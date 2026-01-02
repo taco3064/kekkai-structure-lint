@@ -62,6 +62,7 @@ export function isConfigValid<F extends string>({
   dependencyFlow,
   docs,
   lintFiles,
+  moduleLayout,
   overrideRules,
   packageImportRules,
 }: Partial<Record<keyof DefineOptions<F>, JsonValue>>): DefineOptions<F> {
@@ -112,6 +113,33 @@ export function isConfigValid<F extends string>({
     }
   }
 
+  const files = (Array.isArray(lintFiles) ? lintFiles : [lintFiles]) as string[];
+
+  if (!files.length) {
+    throw new Error('lintFiles is required in structure.config.json');
+  } else {
+    for (const file of files) {
+      if (typeof file !== 'string' || !file?.trim()) {
+        throw new Error(
+          'lintFiles must be a non-empty string or an array of non-empty strings in structure.config.json',
+        );
+      } else if (!LINT_FILES_REGEX.test(file)) {
+        throw new Error(
+          'Each lintFiles entry must include the "{folder}" placeholder in structure.config.json',
+        );
+      }
+    }
+  }
+
+  if (
+    moduleLayout !== undefined &&
+    !['folder', 'flat'].includes(moduleLayout as string)
+  ) {
+    throw new Error(
+      'moduleLayout must be either "folder" or "flat" in structure.config.json',
+    );
+  }
+
   if (overrideRules) {
     const entries = Object.entries(overrideRules);
 
@@ -156,29 +184,12 @@ export function isConfigValid<F extends string>({
     }
   }
 
-  const files = (Array.isArray(lintFiles) ? lintFiles : [lintFiles]) as string[];
-
-  if (!files.length) {
-    throw new Error('lintFiles is required in structure.config.json');
-  } else {
-    for (const file of files) {
-      if (typeof file !== 'string' || !file?.trim()) {
-        throw new Error(
-          'lintFiles must be a non-empty string or an array of non-empty strings in structure.config.json',
-        );
-      } else if (!LINT_FILES_REGEX.test(file)) {
-        throw new Error(
-          'Each lintFiles entry must include the "{folder}" placeholder in structure.config.json',
-        );
-      }
-    }
-  }
-
   return {
     appAlias,
     dependencyFlow,
     docs,
     lintFiles: files,
+    moduleLayout,
     overrideRules,
     packageImportRules,
   } as DefineOptions<F>;

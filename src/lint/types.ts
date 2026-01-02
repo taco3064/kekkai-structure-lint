@@ -26,6 +26,7 @@ export interface DefineOptions<F extends string> {
   dependencyFlow: DependencyFlow<F>[];
   docs?: DocsOptions;
   lintFiles: string | string[];
+  moduleLayout?: 'folder' | 'flat';
   overrideRules?: Partial<Record<F, Partial<RulesConfig>>>;
   packageImportRules?: PackageImportRule<F>[];
 }

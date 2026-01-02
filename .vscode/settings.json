@@ -3,6 +3,7 @@
   "explorer.sortOrder": "type",
   "explorer.sortOrderLexicographicOptions": "upper",
   "explorer.fileNesting.patterns": {
+    "README.md": "README*",
     "eslint.config.ts": ".eslint*, eslint*, .prettier*, prettier*",
     "package.json": "package-lock.json, .npmrc, .nvmrc",
   },

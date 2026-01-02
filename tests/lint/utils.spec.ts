@@ -275,6 +275,32 @@ describe('[Lint Utils] isConfigValid', () => {
     ).toThrow();
   });
 
+  it('should throw error for invalid lintFiles', () => {
+    const { lintFiles: _, ...config } = CONFIG;
+
+    expect(() => Utils.isConfigValid({ ...config, lintFiles: [] })).toThrow();
+    expect(() => Utils.isConfigValid({ ...config, lintFiles: 123 })).toThrow();
+    expect(() => Utils.isConfigValid({ ...config, lintFiles: [123] })).toThrow();
+    expect(() => Utils.isConfigValid({ ...config, lintFiles: [''] })).toThrow();
+
+    expect(() => Utils.isConfigValid({ ...config, lintFiles: 'src/**/*.ts' })).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...config, lintFiles: ['src/**/*.ts', '{folder}/**/*.ts'] }),
+    ).toThrow();
+  });
+
+  it('should throw error for invalid moduleLayout', () => {
+    const { moduleLayout: _, ...config } = CONFIG;
+
+    expect(() => Utils.isConfigValid({ ...config, moduleLayout: null })).toThrow();
+    expect(() => Utils.isConfigValid({ ...config, moduleLayout: 123 })).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...config, moduleLayout: 'invalidLayout' }),
+    ).toThrow();
+  });
+
   it('should throw error for invalid overrideRules', () => {
     const { overrideRules: _, ...config } = CONFIG;
 
@@ -339,21 +365,6 @@ describe('[Lint Utils] isConfigValid', () => {
         ...config,
         packageImportRules: [{ name: 'react', allowedInFolders: ['invalidFolder'] }],
       }),
-    ).toThrow();
-  });
-
-  it('should throw error for invalid lintFiles', () => {
-    const { lintFiles: _, ...config } = CONFIG;
-
-    expect(() => Utils.isConfigValid({ ...config, lintFiles: [] })).toThrow();
-    expect(() => Utils.isConfigValid({ ...config, lintFiles: 123 })).toThrow();
-    expect(() => Utils.isConfigValid({ ...config, lintFiles: [123] })).toThrow();
-    expect(() => Utils.isConfigValid({ ...config, lintFiles: [''] })).toThrow();
-
-    expect(() => Utils.isConfigValid({ ...config, lintFiles: 'src/**/*.ts' })).toThrow();
-
-    expect(() =>
-      Utils.isConfigValid({ ...config, lintFiles: ['src/**/*.ts', '{folder}/**/*.ts'] }),
     ).toThrow();
   });
 });

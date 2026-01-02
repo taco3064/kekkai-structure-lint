@@ -4,14 +4,17 @@ import * as Utils from './utils';
 import type { DefineOptions } from './types';
 
 export function createStructureLint<F extends string>(
-  {
+  config?: Omit<DefineOptions<F>, 'docs'>,
+): ConfigWithExtendsArray {
+  const {
     appAlias,
     dependencyFlow,
     lintFiles,
+    moduleLayout = 'folder',
     overrideRules,
     packageImportRules,
-  }: Omit<DefineOptions<F>, 'docs'> = Utils.loadStructureConfig<F>(),
-): ConfigWithExtendsArray {
+  } = config || Utils.loadStructureConfig<F>();
+
   const folders = Utils.extractAllFolders(dependencyFlow);
 
   return folders.map((folder) => {
@@ -34,7 +37,12 @@ export function createStructureLint<F extends string>(
           {
             patterns: [
               {
-                group: ['../*/**'],
+                group: ['./../**', '././**'],
+                message:
+                  '🚫 Redundant relative path segments (././, ./../) are not allowed. They bypass structural import rules.',
+              },
+              {
+                group: [moduleLayout === 'folder' ? '../*/**' : '../**'],
                 message:
                   '\n🚫 Do not import from upper-level directories. Use the project alias (e.g. "~app/*") to follow the dependency flow.',
               },
