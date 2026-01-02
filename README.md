@@ -13,7 +13,7 @@ In medium to large front-end projects, folder structures tend to degrade over ti
 - Architecture rules live only in documentation, not in tooling
 - Documentation and actual code gradually drift apart
 
-@kekkai/structure-lint is not about code style.  
+`@kekkai/structure-lint` is not about code style.  
 Its goal is to **turn folder structure and dependency direction into enforceable ESLint rules**.
 
 > ⚠️ **ESLint v9+ Required**
@@ -61,10 +61,6 @@ This package is built on three core ideas:
 
 ```bash
 npm install -D @kekkai/structure-lint
-# or
-pnpm add -D @kekkai/structure-lint
-# or
-yarn add -D @kekkai/structure-lint
 ```
 
 This package provides:
@@ -246,6 +242,52 @@ Based on the `markerTag` configuration, the CLI will locate and overwrite the fo
 ```md
 <!-- DEPENDENCY_RULE:START -->
 <!-- DEPENDENCY_RULE:END -->
+```
+
+## 🔁 Circular Dependencies (Optional)
+
+`@kekkai/structure-lint` enforces one-way dependency flow **across layers**,
+but intentionally allows **same-layer imports as a design trade-off**.
+
+As a result, circular dependencies may still occur within the same layer.
+This is usually acceptable for small modules, but may become risky as the codebase grows.
+
+If your team wants to detect these cases, you can optionally enable:
+
+- `import/no-cycle` (from [`eslint-plugin-import`](https://www.npmjs.com/package/eslint-plugin-import))
+
+> ⚠️ **TypeScript projects must configure a resolver**, otherwise circular dependencies may not be detected.
+> Try [`eslint-import-resolver-typescript`](https://www.npmjs.com/package/eslint-import-resolver-typescript).
+
+```ts
+import imports from 'eslint-plugin-import';
+import { defineConfig } from 'eslint/config';
+import { createStructureLint } from '@kekkai/structure-lint';
+
+export default defineConfig([
+  {
+    plugins: {
+      import: imports,
+    },
+    settings: {
+      'import/parsers': {
+        // Project file extensions handled by the TypeScript parser
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
+      },
+      'import/resolver': {
+        typescript: true,
+        node: {
+          // Project file extensions used for module resolution
+          extensions: ['.ts', '.tsx'],
+        },
+      },
+    },
+    rules: {
+      'import/no-cycle': 'error',
+    },
+  },
+  ...createStructureLint(),
+]);
 ```
 
 ## 🧠 Philosophy

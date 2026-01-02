@@ -60,10 +60,6 @@
 
 ```bash
 npm install -D @kekkai/structure-lint
-# or
-pnpm add -D @kekkai/structure-lint
-# or
-yarn add -D @kekkai/structure-lint
 ```
 
 本套件同時提供：
@@ -236,6 +232,51 @@ flowchart TD
 ```md
 <!-- DEPENDENCY_RULE:START -->
 <!-- DEPENDENCY_RULE:END -->
+```
+
+## 🔁 Circular Dependencies (Optional)
+
+`@kekkai/structure-lint` 會嚴格限制 **跨層** 的單向依賴方向，但仍刻意允許 **同一層內的模組彼此引用** 作為設計取捨。
+
+因此，在相同 layer 之內，仍然可能發生循環依賴（circular dependencies）。
+這在模組規模較小時通常是可接受的，但隨著專案成長，可能會逐漸帶來風險。
+
+如果你的團隊希望進一步偵測這類情況，可以選擇性地啟用以下規則：
+
+- `import/no-cycle` (from [`eslint-plugin-import`](https://www.npmjs.com/package/eslint-plugin-import))
+
+> ⚠️ **TypeScript 專案必須正確設定 resolver**，否則可能無法偵測到循環依賴。
+> 建議搭配使用 [`eslint-import-resolver-typescript`](https://www.npmjs.com/package/eslint-import-resolver-typescript)。
+
+```ts
+import imports from 'eslint-plugin-import';
+import { defineConfig } from 'eslint/config';
+import { createStructureLint } from '@kekkai/structure-lint';
+
+export default defineConfig([
+  {
+    plugins: {
+      import: imports,
+    },
+    settings: {
+      'import/parsers': {
+        // Project file extensions handled by the TypeScript parser
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
+      },
+      'import/resolver': {
+        typescript: true,
+        node: {
+          // Project file extensions used for module resolution
+          extensions: ['.ts', '.tsx'],
+        },
+      },
+    },
+    rules: {
+      'import/no-cycle': 'error',
+    },
+  },
+  ...createStructureLint(),
+]);
 ```
 
 ## 🧠 Philosophy
