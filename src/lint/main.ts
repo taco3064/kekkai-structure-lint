@@ -39,7 +39,7 @@ export function createStructureLint<F extends string>(
               {
                 group: ['./../**', '././**'],
                 message:
-                  '🚫 Redundant relative path segments (././, ./../) are not allowed. They bypass structural import rules.',
+                  '\n🚫 Redundant relative path segments (././, ./../) are not allowed. They bypass structural import rules.',
               },
               {
                 group: [moduleLayout === 'folder' ? '../*/**' : '../**'],
