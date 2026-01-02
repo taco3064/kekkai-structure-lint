@@ -2,4 +2,4 @@
 '@kekkai/structure-lint': minor
 ---
 
-Introduce `moduleLayout` configuration to adjust relative import rulesbased on folder-based or flat module structures.
+Introduce `moduleLayout` configuration to adjust relative import rules based on folder-based or flat module structures.
