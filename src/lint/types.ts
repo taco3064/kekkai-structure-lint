@@ -1,9 +1,11 @@
 import type { RulesConfig } from '@eslint/core';
 
-interface PackageImportRule<F extends string> {
+export interface PackageImportRule<F extends string> {
   name: string;
   importNames?: string[];
   allowedInFolders: F[];
+  pattern?: boolean;
+  exemptFilePatterns?: string[];
 }
 
 export interface DocsOptions {
@@ -26,7 +28,10 @@ export interface DefineOptions<F extends string> {
   dependencyFlow: DependencyFlow<F>[];
   docs?: DocsOptions;
   lintFiles: string | string[];
+  lintFilesIgnore?: string | string[];
   moduleLayout?: 'folder' | 'flat';
   overrideRules?: Partial<Record<F, Partial<RulesConfig>>>;
   packageImportRules?: PackageImportRule<F>[];
+  additionalAliases?: Record<string, string>;
+  severity?: 'error' | 'warn';
 }

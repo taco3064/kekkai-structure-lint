@@ -62,9 +62,12 @@ export function isConfigValid<F extends string>({
   dependencyFlow,
   docs,
   lintFiles,
+  lintFilesIgnore,
   moduleLayout,
   overrideRules,
   packageImportRules,
+  additionalAliases,
+  severity,
 }: Partial<Record<keyof DefineOptions<F>, JsonValue>>): DefineOptions<F> {
   if (typeof appAlias !== 'string' || !appAlias?.trim()) {
     throw new Error('appAlias is required in structure.config.json');
@@ -93,6 +96,14 @@ export function isConfigValid<F extends string>({
         );
       }
     }
+  }
+
+  const cycle = detectDependencyCycle(dependencyFlow as [string, string][]);
+
+  if (cycle) {
+    throw new Error(
+      `dependencyFlow contains a circular dependency: ${cycle.join(' → ')} in structure.config.json`,
+    );
   }
 
   const folders = extractAllFolders(dependencyFlow as DependencyFlow<F>[]);
@@ -149,6 +160,15 @@ export function isConfigValid<F extends string>({
       );
     } else if (entries.some(([_, rules]) => rules && typeof rules !== 'object')) {
       throw new Error('overrideRules values must be objects in structure.config.json');
+    } else if (
+      entries.some(
+        ([_, rules]) =>
+          rules && typeof rules === 'object' && 'no-restricted-imports' in (rules as object),
+      )
+    ) {
+      throw new Error(
+        '"no-restricted-imports" cannot be set via overrideRules. This rule is managed by structure-lint to enforce the dependency flow.',
+      );
     }
   }
 
@@ -158,7 +178,8 @@ export function isConfigValid<F extends string>({
     }
 
     for (const rule of packageImportRules) {
-      const { name, importNames, allowedInFolders } = (rule || {}) as JsonObject;
+      const { name, importNames, allowedInFolders, pattern, exemptFilePatterns } = (rule ||
+        {}) as JsonObject;
 
       if (typeof name !== 'string' || !name?.trim()) {
         throw new Error(
@@ -180,8 +201,63 @@ export function isConfigValid<F extends string>({
         throw new Error(
           'allowedInFolders in packageImportRule contains invalid folder names not present in dependencyFlow in structure.config.json',
         );
+      } else if (pattern !== undefined && typeof pattern !== 'boolean') {
+        throw new Error(
+          'pattern in packageImportRule must be a boolean if provided in structure.config.json',
+        );
+      } else if (
+        exemptFilePatterns !== undefined &&
+        (!Array.isArray(exemptFilePatterns) ||
+          !exemptFilePatterns.length ||
+          exemptFilePatterns.some((p) => typeof p !== 'string' || !p?.trim()))
+      ) {
+        throw new Error(
+          'exemptFilePatterns in packageImportRule must be a non-empty array of non-empty strings in structure.config.json',
+        );
       }
     }
+  }
+
+  if (lintFilesIgnore !== undefined) {
+    const ignoreFiles = (
+      Array.isArray(lintFilesIgnore) ? lintFilesIgnore : [lintFilesIgnore]
+    ) as string[];
+
+    if (!ignoreFiles.length || ignoreFiles.some((f) => typeof f !== 'string' || !f?.trim())) {
+      throw new Error(
+        'lintFilesIgnore must be a non-empty string or an array of non-empty strings in structure.config.json',
+      );
+    }
+  }
+
+  if (additionalAliases !== undefined) {
+    if (
+      typeof additionalAliases !== 'object' ||
+      Array.isArray(additionalAliases) ||
+      additionalAliases === null
+    ) {
+      throw new Error(
+        'additionalAliases must be a plain object (Record<string, string>) in structure.config.json',
+      );
+    }
+
+    const aliasEntries = Object.entries(additionalAliases);
+
+    if (
+      aliasEntries.some(
+        ([key, val]) => !key?.trim() || typeof val !== 'string' || !val?.trim(),
+      )
+    ) {
+      throw new Error(
+        'Each entry in additionalAliases must have non-empty string keys and values in structure.config.json',
+      );
+    }
+  }
+
+  if (severity !== undefined && severity !== 'error' && severity !== 'warn') {
+    throw new Error(
+      'severity must be either "error" or "warn" in structure.config.json',
+    );
   }
 
   return {
@@ -189,8 +265,56 @@ export function isConfigValid<F extends string>({
     dependencyFlow,
     docs,
     lintFiles: files,
+    lintFilesIgnore,
     moduleLayout,
     overrideRules,
     packageImportRules,
+    additionalAliases,
+    severity,
   } as DefineOptions<F>;
+}
+
+function detectDependencyCycle(edges: [string, string][]): string[] | null {
+  const graph = new Map<string, string[]>();
+
+  for (const [from, to] of edges) {
+    if (!graph.has(from)) graph.set(from, []);
+    graph.get(from)!.push(to);
+  }
+
+  const visited = new Set<string>();
+  const stack = new Set<string>();
+
+  function dfs(node: string, path: string[]): string[] | null {
+    visited.add(node);
+    stack.add(node);
+
+    for (const neighbor of graph.get(node) ?? []) {
+      if (stack.has(neighbor)) {
+        const cycleStart = path.indexOf(neighbor);
+
+        return [...path.slice(cycleStart), neighbor];
+      }
+
+      if (!visited.has(neighbor)) {
+        const result = dfs(neighbor, [...path, neighbor]);
+        if (result) return result;
+      }
+    }
+
+    stack.delete(node);
+
+    return null;
+  }
+
+  const nodes = new Set(edges.flatMap(([f, t]) => [f, t]));
+
+  for (const node of nodes) {
+    if (!visited.has(node)) {
+      const result = dfs(node, [node]);
+      if (result) return result;
+    }
+  }
+
+  return null;
 }

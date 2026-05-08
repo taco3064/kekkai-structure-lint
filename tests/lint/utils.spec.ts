@@ -222,6 +222,25 @@ describe('[Lint Utils] isConfigValid', () => {
     expect(() => Utils.isConfigValid({ ...config, appAlias: ' ' })).toThrow();
   });
 
+  it('should throw error when dependencyFlow contains a cycle', () => {
+    const { dependencyFlow: _, ...config } = CONFIG;
+
+    expect(() =>
+      Utils.isConfigValid({ ...config, dependencyFlow: [['a', 'a']] }),
+    ).toThrow(/circular dependency/);
+
+    expect(() =>
+      Utils.isConfigValid({ ...config, dependencyFlow: [['a', 'b'], ['b', 'a']] }),
+    ).toThrow(/circular dependency/);
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        dependencyFlow: [['a', 'b'], ['b', 'c'], ['c', 'a']],
+      }),
+    ).toThrow(/circular dependency/);
+  });
+
   it('should throw error for invalid dependencyFlow', () => {
     const { dependencyFlow: _, ...config } = CONFIG;
 
@@ -311,6 +330,13 @@ describe('[Lint Utils] isConfigValid', () => {
     expect(() =>
       Utils.isConfigValid({ ...config, overrideRules: { components: 'not-an-object' } }),
     ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        overrideRules: { components: { 'no-restricted-imports': 'off' } },
+      }),
+    ).toThrow();
   });
 
   it('should throw error for invalid packageImportRules', () => {
@@ -366,5 +392,151 @@ describe('[Lint Utils] isConfigValid', () => {
         packageImportRules: [{ name: 'react', allowedInFolders: ['invalidFolder'] }],
       }),
     ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          { name: 'react', allowedInFolders: ['contexts'], pattern: 'not-a-boolean' },
+        ],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          {
+            name: 'react',
+            allowedInFolders: ['contexts'],
+            exemptFilePatterns: [123],
+          },
+        ],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          {
+            name: 'react',
+            allowedInFolders: ['contexts'],
+            exemptFilePatterns: [' '],
+          },
+        ],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          {
+            name: 'react',
+            allowedInFolders: ['contexts'],
+            exemptFilePatterns: [],
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it('should accept valid pattern and exemptFilePatterns in packageImportRules', () => {
+    const { packageImportRules: _, ...config } = CONFIG;
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          {
+            name: '@/services/auth/**',
+            allowedInFolders: ['services'],
+            pattern: true,
+          },
+        ],
+      }),
+    ).not.toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({
+        ...config,
+        packageImportRules: [
+          {
+            name: 'vue',
+            allowedInFolders: ['contexts'],
+            exemptFilePatterns: ['**/*.test.{js,vue}'],
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it('should throw error for invalid lintFilesIgnore', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, lintFilesIgnore: [] }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, lintFilesIgnore: [123] }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, lintFilesIgnore: [' '] }),
+    ).toThrow();
+  });
+
+  it('should accept valid lintFilesIgnore', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, lintFilesIgnore: '**/*.test.ts' }),
+    ).not.toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, lintFilesIgnore: ['**/*.test.ts', '**/*.spec.ts'] }),
+    ).not.toThrow();
+  });
+
+  it('should throw error for invalid additionalAliases', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, additionalAliases: 'not-an-object' }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, additionalAliases: [1, 2] }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, additionalAliases: { '': 'src' } }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, additionalAliases: { '~root': '' } }),
+    ).toThrow();
+  });
+
+  it('should accept valid additionalAliases', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, additionalAliases: { '~root': '.', '~src': 'src' } }),
+    ).not.toThrow();
+  });
+
+  it('should throw error for invalid severity', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, severity: 'critical' }),
+    ).toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, severity: 123 }),
+    ).toThrow();
+  });
+
+  it('should accept valid severity', () => {
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, severity: 'error' }),
+    ).not.toThrow();
+
+    expect(() =>
+      Utils.isConfigValid({ ...CONFIG, severity: 'warn' }),
+    ).not.toThrow();
   });
 });

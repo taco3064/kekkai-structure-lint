@@ -217,12 +217,21 @@ structure.config.json 用來定義專案的 資料夾依賴規則 與 文件同�
    * packageImportRules
    *   type (optional)
    *   - {
-   *       name: string;           // npm 套件名稱
-   *       importNames?: string[]; // 僅限制指定的 named imports。若省略，則限制整個套件
-   *       allowedInFolders: F[];  // 允許使用該套件的資料夾清單
+   *       name: string;                    // 要限制的模組路徑。可以是 npm 套件名稱，
+   *                                        // 也可以是內部 alias 路徑（如 "@/services/httpClient"）。
+   *                                        // 設定 `pattern: true` 時，視為 glob 匹配。
+   *       importNames?: string[];          // 僅限制指定的 named imports。若省略，則限制整個模組。
+   *       allowedInFolders: F[];           // 允許使用該模組的資料夾清單。
+   *       pattern?: boolean;               // true 時，name 視為 glob 模式（如 "@/services/auth/**"）。
+   *                                        // 預設：false（字面匹配）。
+   *       exemptFilePatterns?: string[];   // 豁免此規則的檔案 glob 列表。
+   *                                        // 常見用途：允許測試檔案使用在 production 中被限制的 import。
    *     }[]
    *
    * 限制 特定套件或特定 import 成員 只能在指定資料夾中使用。
+   *
+   * `name` 欄位也支援內部 alias 路徑，不限於 npm 套件：
+   *   { "name": "@/services/httpClient", "allowedInFolders": ["services"] }
    */
   "packageImportRules": [
     {
@@ -234,8 +243,67 @@ structure.config.json 用來定義專案的 資料夾依賴規則 與 文件同�
       "name": "react",
       "importNames": ["useContext"],
       "allowedInFolders": ["hooks"]
+    },
+    {
+      "name": "@/services/auth/**",
+      "allowedInFolders": ["services"],
+      "pattern": true
+    },
+    {
+      "name": "vue",
+      "importNames": ["provide"],
+      "allowedInFolders": ["contexts"],
+      "exemptFilePatterns": ["**/*.test.{js,vue}", "**/*.spec.{js,vue}"]
     }
-  ]
+  ],
+
+  /**
+   * lintFilesIgnore
+   *   type (optional):
+   *   - string | string[]
+   *
+   * 全域排除特定檔案的 glob 模式。
+   * 符合條件的檔案不會被任何 structure-lint 規則檢查。
+   * 適合用來整批排除測試檔、story 檔等類別。
+   */
+  "lintFilesIgnore": ["**/*.test.{js,ts,vue}", "**/*.spec.{js,ts,vue}"],
+
+  /**
+   * additionalAliases
+   *   type (optional):
+   *   - Record<string, string>
+   *
+   * 宣告專案中除了 `appAlias` 以外使用的其他模組 alias。
+   * 這些 alias 同樣視為具有層級意識（layer-aware）——
+   * 同層與跨層的 import 限制規則也會套用到這些 alias 上，
+   * 與 `appAlias` 的處理方式一致。
+   *
+   * 常見用途：為專案根目錄建立 alias，讓根目錄的工具檔案
+   * （vitest.setup.js、storybook/preview.js 等）
+   * 可以在不觸發「禁止向上目錄 import」規則的前提下被引用：
+   *
+   *   // vite.config.ts
+   *   resolve: { alias: { '~root': fileURLToPath(new URL('.', import.meta.url)) } }
+   *
+   *   // 在任何被 lint 的檔案中
+   *   import setup from '~root/vitest.setup'  // ✅ 允許
+   */
+  "additionalAliases": {
+    "~root": "."
+  },
+
+  /**
+   * severity
+   *   type (optional):
+   *   - 'error' | 'warn'
+   *
+   * 設定所有 structure-lint 規則的 ESLint 嚴重程度。
+   * 預設：'error'。
+   *
+   * 在逐步導入期間，可設為 'warn' 讓問題浮現但不阻斷 CI，
+   * 待程式碼庫整理完畢後再切換為 'error'。
+   */
+  "severity": "error"
 }
 ```
 
@@ -248,6 +316,42 @@ flowchart TD
   containers --> components
   components --> hooks
   hooks --> | Only Context | contexts
+```
+
+### 📝 使用 `description` 為邊（Edge）加上標註
+
+`dependencyFlow` 元組的第三個選用欄位 `description`，會在 Mermaid 圖表中渲染為邊的標籤：
+
+```jsonc
+["containers", "contexts", { "description": "Only Provider" }]
+// 渲染結果：containers --> | Only Provider | contexts
+```
+
+此欄位純粹用於**文件說明**，不影響任何 ESLint 規則。
+適合用來說明非直覺的依賴關係，例如所使用的設計模式：
+
+```jsonc
+"dependencyFlow": [
+  ["containers", "contexts", { "description": "Only Provider" }],
+  ["hooks",      "contexts", { "description": "Only Context", "selfOnly": true }]
+]
+```
+
+渲染結果：
+
+```mermaid
+flowchart TD
+  containers --> | Only Provider | contexts
+  hooks --> | Only Context | contexts
+```
+
+### 🔄 CLI 變更摘要輸出
+
+執行 `npx structure-lint` 時，CLI 現在會回報依賴流圖是否實際發生了變更：
+
+```
+✔ No changes to dependency flow diagram.
+✔ Docs updated. Updated 3 edge(s) in the dependency flow diagram.
 ```
 
 以範例中 `markerTag` 的設定，CLI 會尋找以下區塊並覆寫內容：

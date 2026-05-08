@@ -6,6 +6,7 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 import type { DefineOptions, DocsOptions, DependencyFlow } from '../lint/types';
+import type { GenerateDocsResult } from './types';
 
 export const CACHE_PATH = path.resolve(process.cwd(), 'node_modules/.cache/kekkai');
 export const CACHE_KEY = 'dependency-flowchart-hash';
@@ -23,43 +24,61 @@ export function isCliEntry(argv1?: string) {
   return argv1 && import.meta.url === pathToFileURL(argv1).href;
 }
 
+const MERMAID_BLOCK_REGEX = /```mermaid\nflowchart TD\n([\s\S]*?)\n```/;
+
 export async function generateDocs<F extends string>({
   dependencyFlow,
   docs,
   prettier,
-}: Required<Pick<DefineOptions<F>, 'dependencyFlow' | 'docs'> & { prettier: string }>) {
+}: Required<
+  Pick<DefineOptions<F>, 'dependencyFlow' | 'docs'> & { prettier: string }
+>): Promise<GenerateDocsResult> {
   const marker = getMarker(docs.markerTag);
 
-  if (isDocsValid(docs, marker.regex)) {
-    const { content = DEFAULT_CONTENT } = docs;
-    const docsFile = fs.readFileSync(path.resolve(process.cwd(), docs.file), 'utf-8');
+  isDocsValid(docs, marker.regex);
 
-    fs.writeFileSync(
-      path.resolve(process.cwd(), docs.file),
-      [
-        docsFile.slice(0, docsFile.indexOf(marker.tag[0]) + marker.tag[0].length),
-        '```mermaid',
-        'flowchart TD',
-        ...dependencyFlow.map(
-          ([from, to, options]) =>
-            `  ${from} ${!options?.description ? '' : `-- ${options.description} `}--> ${to}`,
-        ),
-        '```',
-        content,
-        docsFile.slice(docsFile.indexOf(marker.tag[1])),
-      ].join('\n'),
-    );
+  const { content = DEFAULT_CONTENT } = docs;
+  const docsFile = fs.readFileSync(path.resolve(process.cwd(), docs.file), 'utf-8');
 
-    if (fs.existsSync(prettier)) {
-      try {
-        execSync(`"${prettier}" --write "${docs.file}"`, { stdio: 'inherit' });
-      } catch {
-        console.warn('Prettier formatting failed for the documentation file.');
-      }
-    }
+  const newEdges = dependencyFlow.map(
+    ([from, to, options]) =>
+      `  ${from} ${!options?.description ? '' : `-- ${options.description} `}--> ${to}`,
+  );
 
-    await makeCache(dependencyFlow);
+  const startIdx = docsFile.indexOf(marker.tag[0]) + marker.tag[0].length;
+  const endIdx = docsFile.indexOf(marker.tag[1]);
+  const existingBlock = docsFile.slice(startIdx, endIdx);
+  const oldEdgesMatch = existingBlock.match(MERMAID_BLOCK_REGEX);
+  const oldEdges = oldEdgesMatch ? oldEdgesMatch[1].split('\n') : [];
+  const edgesChanged = JSON.stringify(oldEdges) !== JSON.stringify(newEdges);
+
+  await makeCache(dependencyFlow);
+
+  if (!edgesChanged) {
+    return { changed: false };
   }
+
+  fs.writeFileSync(
+    path.resolve(process.cwd(), docs.file),
+    [
+      docsFile.slice(0, startIdx),
+      ['```mermaid', 'flowchart TD', ...newEdges, '```', content].join('\n'),
+      docsFile.slice(endIdx),
+    ].join('\n'),
+  );
+
+  if (fs.existsSync(prettier)) {
+    try {
+      execSync(`"${prettier}" --write "${docs.file}"`, { stdio: 'inherit' });
+    } catch {
+      console.warn('Prettier formatting failed for the documentation file.');
+    }
+  }
+
+  return {
+    changed: true,
+    summary: `Updated ${newEdges.length} edge(s) in the dependency flow diagram.`,
+  };
 }
 
 async function makeCache<F extends string>(flowchart: DependencyFlow<F>[]) {
@@ -117,5 +136,4 @@ function isDocsValid(
     );
   }
 
-  return true;
 }

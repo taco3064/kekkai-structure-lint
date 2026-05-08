@@ -28,13 +28,17 @@ export async function run() {
   const { dependencyFlow, docs } = config;
 
   try {
-    await generateDocs({
+    const result = await generateDocs({
       dependencyFlow,
       docs,
       prettier: path.resolve(process.cwd(), 'node_modules/.bin/prettier'),
     });
 
-    spinner.succeed('Docs generated successfully.');
+    if (result.changed) {
+      spinner.succeed(`Docs updated. ${result.summary}`);
+    } else {
+      spinner.succeed('No changes to dependency flow diagram.');
+    }
 
     return 0;
   } catch (e) {

@@ -1,2 +1,2 @@
 export * from './main';
-export type { DefineOptions, DependencyFlow } from './types';
+export type { DefineOptions, DependencyFlow, PackageImportRule } from './types';

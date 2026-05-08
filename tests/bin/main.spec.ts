@@ -24,6 +24,36 @@ describe('main.ts executes on import', () => {
     expect(await run()).toBe(0);
   });
 
+  it('should report update when docs changed or unchanged', async () => {
+    const mockDocs = { dependencyFlow: [['pages', 'layouts']], docs: { file: 'tests/docs.md', markerTag: 'DEPENDENCY_RULE' } };
+
+    for (const generateDocsResult of [
+      { changed: true, summary: 'Updated 3 edge(s) in the dependency flow diagram.' },
+      { changed: false },
+    ]) {
+      try {
+        vi.resetModules();
+
+        vi.doMock('~lib/bin/utils', () => ({
+          isCliEntry: vi.fn(() => false),
+          generateDocs: vi.fn(() => Promise.resolve(generateDocsResult)),
+        }));
+
+        vi.doMock('~lib/lint/utils', () => ({
+          loadStructureConfig: vi.fn(() => mockDocs),
+        }));
+
+        const MainMocked = await import('~lib/bin/main');
+
+        expect(await MainMocked.run()).toBe(0);
+      } finally {
+        vi.doUnmock('~lib/bin/utils');
+        vi.doUnmock('~lib/lint/utils');
+        vi.resetModules();
+      }
+    }
+  });
+
   it('should stop execution when no docs config', async () => {
     try {
       vi.resetModules();

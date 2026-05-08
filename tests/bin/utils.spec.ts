@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import * as Utils from '~lib/bin/utils';
 import STRUCTURE_CONFIG from '~structure.config.json';
-import type { DefineOptions } from '~lib/lint/types';
+import type { DefineOptions, DependencyFlow } from '~lib/lint/types';
 
 describe('[Bin Utils] generateDocs', () => {
   const { dependencyFlow, docs } = STRUCTURE_CONFIG as Required<DefineOptions<string>>;
@@ -78,13 +78,19 @@ describe('[Bin Utils] generateDocs', () => {
   });
 
   it('should skip formatting if Prettier is not found', async () => {
-    await expect(
-      Utils.generateDocs({
-        dependencyFlow,
-        docs,
-        prettier: 'non-existent-prettier-path',
-      }),
-    ).resolves.toBeUndefined();
+    const modifiedFlow: DependencyFlow<string>[] = [
+      ...dependencyFlow,
+      ['utils', 'noFormatterLayer'],
+    ];
+
+    const result = await Utils.generateDocs({
+      dependencyFlow: modifiedFlow,
+      docs,
+      prettier: 'non-existent-prettier-path',
+    });
+
+    expect(result).toMatchObject({ changed: true });
+    fs.writeFileSync(docs.file, defaultDocs);
   });
 
   it('should skip formatting if Prettier fail', async () => {
@@ -99,14 +105,65 @@ describe('[Bin Utils] generateDocs', () => {
 
       const UtilsMocked = await import('~lib/bin/utils');
 
+      // Use a modified flow so edges change → write is triggered → prettier is called → fails
+      const modifiedFlow: DependencyFlow<string>[] = [
+        ...dependencyFlow,
+        ['utils', 'newExtraLayer'],
+      ];
+
       await expect(
-        UtilsMocked.generateDocs({ dependencyFlow, docs, prettier }),
-      ).resolves.toBeUndefined();
+        UtilsMocked.generateDocs({ dependencyFlow: modifiedFlow, docs, prettier }),
+      ).resolves.toMatchObject({ changed: true });
     } finally {
       vi.doUnmock('node:child_process');
       vi.resetModules();
 
       fs.writeFileSync(docs.file, defaultDocs);
+    }
+  });
+
+  it('should return changed:true with summary when edges are updated', async () => {
+    const modifiedFlow: DependencyFlow<string>[] = [
+      ...dependencyFlow,
+      ['utils', 'newLayer'],
+    ];
+
+    const result = await Utils.generateDocs({
+      dependencyFlow: modifiedFlow,
+      docs,
+      prettier,
+    });
+
+    expect(result).toMatchObject({
+      changed: true,
+      summary: expect.stringContaining('edge(s)'),
+    });
+
+    // Restore original docs
+    fs.writeFileSync(docs.file, defaultDocs);
+  });
+
+  it('should return changed:false when edges are unchanged', async () => {
+    const result = await Utils.generateDocs({ dependencyFlow, docs, prettier });
+
+    expect(result).toEqual({ changed: false });
+  });
+
+  it('should treat empty marker block (no mermaid) as changed', async () => {
+    const tmpFile = 'tests/docs-empty-markers.md';
+
+    fs.writeFileSync(tmpFile, '<!-- EMPTY_TEST:START -->\n\n<!-- EMPTY_TEST:END -->');
+
+    try {
+      const result = await Utils.generateDocs({
+        dependencyFlow,
+        docs: { file: tmpFile, markerTag: 'EMPTY_TEST' },
+        prettier,
+      });
+
+      expect(result).toMatchObject({ changed: true });
+    } finally {
+      fs.rmSync(tmpFile);
     }
   });
 });
