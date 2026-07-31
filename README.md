@@ -4,6 +4,32 @@
 
 **English** | [繁體中文](https://github.com/taco3064/kekkai-structure-lint/blob/main/README.zh-TW.md)
 
+> ## ⚠️ Superseded by [@kekkai/blueprint](https://www.npmjs.com/package/@kekkai/blueprint)
+>
+> This package is no longer maintained. Its successor emits the same structure
+> rules from the same idea — a config-driven, one-way dependency flow — and
+> `emitLint()` is a drop-in for a flat `eslint.config`:
+>
+> ```ts
+> // eslint.config.ts
+> import { defineBlueprint, emitLint } from '@kekkai/blueprint';
+>
+> export default emitLint(defineBlueprint({
+>   framework: 'react',
+>   architecture: { alias: '~app', layers: [/* ... */] },
+> }));
+> ```
+>
+> Nothing else runs: no CLI, no generated docs, no agent files — those are
+> separate exports you simply do not call. Blueprint has zero runtime
+> dependencies, so this is one package, same as before.
+>
+> **1.2.0 keeps working and is not going away.** It stays published, and this
+> repository stays readable as the reference for anyone still on 1.x — the
+> documentation below describes 1.x and is left exactly as it was.
+>
+> Docs: **https://taco3064.github.io/blueprint/**
+
 # @kekkai/structure-lint
 
 A **config-driven** ESLint structure rule generator that enforces **one-way folder dependency flow** in your project, with a separate CLI for syncing and validating dependency rules in documentation.

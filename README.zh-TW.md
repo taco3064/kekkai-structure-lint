@@ -4,6 +4,30 @@
 
 [English](https://github.com/taco3064/kekkai-structure-lint/blob/main/README.md) | **繁體中文**
 
+> ## ⚠️ 已由 [@kekkai/blueprint](https://www.npmjs.com/package/@kekkai/blueprint) 接手
+>
+> 本套件不再維護。<br>
+> 接手的套件出自同一個想法 —— 設定驅動、單向依賴流 —— 產出的結構規則相同。<br>
+> `emitLint()` 可以直接當作 flat `eslint.config` 使用：
+>
+> ```ts
+> // eslint.config.ts
+> import { defineBlueprint, emitLint } from '@kekkai/blueprint';
+>
+> export default emitLint(defineBlueprint({
+>   framework: 'react',
+>   architecture: { alias: '~app', layers: [/* ... */] },
+> }));
+> ```
+>
+> 不會有其他東西跟著跑：沒有 CLI、不產文件、不寫 agent 檔案 —— 那些是另外的匯出，你不呼叫就不存在。<br>
+> blueprint 零 runtime 依賴，所以一樣只裝一個套件。
+>
+> **1.2.0 會繼續正常運作，也不會下架。**<br>
+> 它維持發布狀態，這個 repo 也維持可讀，作為還在 1.x 的人的查閱來源 —— 底下的文件描述的是 1.x，原封不動保留。
+>
+> 文件：**https://taco3064.github.io/blueprint/**
+
 # 📦 @kekkai/structure-lint
 
 一個 **config-driven** 的 ESLint 結構規則產生器，用來強制專案遵守 **單向資料夾依賴（One-way Dependency Flow）**，並提供獨立 CLI 來同步與驗證專案文件中的依賴規則說明。
