@@ -1,4 +1,6 @@
+[![npm](https://img.shields.io/npm/v/@kekkai/structure-lint)](https://www.npmjs.com/package/@kekkai/structure-lint)
 [![codecov](https://codecov.io/gh/taco3064/kekkai-structure-lint/branch/main/graph/badge.svg)](https://codecov.io/gh/taco3064/kekkai-structure-lint)
+[![license](https://img.shields.io/npm/l/@kekkai/structure-lint)](./LICENSE)
 
 [English](https://github.com/taco3064/kekkai-structure-lint/blob/main/README.md) | **繁體中文**
 
